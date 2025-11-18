@@ -1,0 +1,72 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+.pre-commit-config.yaml
+.github/workflows/
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables (should be passed as build args or env vars)
+.env
+.env.local
+.env.*.local
+.env.example
+
+# Logs (runtime logs, not needed in image)
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+tests/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Documentation (optional - include if you want it in image)
+# README.md
+# docs/
+
+# Build artifacts
+dist/
+build/
+*.egg
+
+# Database files (if any local ones)
+*.db
+*.sqlite
+*.sqlite3
+
+# Project specific output files
+*.txt
