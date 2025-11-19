@@ -5,7 +5,6 @@ from crewai_tools import SerperDevTool
 
 from .tools.calculation_tools import (
     calculate_dynamic_thresholds,
-    calculate_portfolio_dv01,
     calculate_swap_pnl,
     calculate_years_to_maturity,
     check_trading_signal,
@@ -44,14 +43,13 @@ class PrismCrew:
 
     @agent
     def risk_calculator_agent(self) -> Agent:
-        """Create the Risk Calculator Agent for computing swap PnL and portfolio DV01."""
+        """Create the Risk Calculator Agent for computing swap PnL."""
         logger.debug("Initializing Risk Calculator Agent")
         return Agent(
             config=self.agents_config["risk_calculator_agent"],
             tools=[
                 calculate_swap_pnl,
                 calculate_years_to_maturity,
-                calculate_portfolio_dv01,
                 get_latest_market_rate,
             ],
             verbose=True,
@@ -63,7 +61,7 @@ class PrismCrew:
         logger.debug("Initializing Risk Manager Agent")
         return Agent(
             config=self.agents_config["risk_manager_agent"],
-            tools=[calculate_dynamic_thresholds, calculate_portfolio_dv01],
+            tools=[calculate_dynamic_thresholds],
             verbose=True,
         )
 
