@@ -60,9 +60,6 @@ PRISM monitors USD SOFR swap trading positions in real-time and automatically ge
 2. **Set Up Environment**:
    - Copy the `.env.example` to `.env` and fill in the required environment variables.
 
-## ⚙️ Configuration
-
-Edit `src/prism/utils/constants.py` for thresholds and settings.
 
 ## 🚀 Quick Start
 
