@@ -173,30 +173,12 @@ with gr.Blocks(title="PRISM - Swap Trading AI", theme=gr.themes.Soft()) as demo:
         PRISM uses **5 AI agents** that work sequentially to analyze your positions:
 
         1. **Market Data Agent** 📡
-            - Searches online for current USD SOFR swap rates (2Y, 5Y, 10Y, 30Y)
-            - Uses SerperDevTool to find real-time market data
-            - Stores rates in database for comparison
-
         2. **Portfolio Agent** 📊
-            - Loads all your open swap positions from database
-            - Retrieves entry rate, notional amount, maturity date for each position
-
         3. **Risk Manager Agent** ⚖️
-            - Calculates custom profit targets and stop losses for each position
-            - Larger positions get tighter limits (safer), smaller positions get wider limits (more room)
-            - Example: $25M position → close at ±$81K, $10M position → close at ±$53K
-
         4. **Risk Calculator Agent** 💰
-            - Compares your entry rate vs current market rate
-            - Calculates exact profit/loss in dollars for each position
-            - Example: Entered 5Y at 4.10%, now trading at 3.40% → you're up $373K
-
         5. **Trading Decision Agent** 🎯
-            - Checks if P&L hit profit target (CLOSE to take profit) or stop loss (CLOSE to cut loss)
-            - If neither, signal HOLD (keep the position open)
-            - Saves all signals with reasoning to database
 
-        **Sequential Flow:** Each agent completes its task before passing results to the next agent.
+        ![Workflow](https://github.com/lisekarimi/prism/blob/main/assets/workflow.png?raw=true)
 
         ---
 
@@ -220,14 +202,6 @@ with gr.Blocks(title="PRISM - Swap Trading AI", theme=gr.themes.Soft()) as demo:
             - See exactly why agents recommended each action
             - View calculations, thresholds used, and step-by-step analysis
             - Full audit trail of every agent's thought process
-
-        ---
-
-        ### 🚦 Quick Start
-
-        1. **Dashboard** - View live data and run analysis cycle (auto-refreshes every 10s)
-        2. **Agent Reasoning** - See why agents made each decision
-
         ---
 
         **Built with:** CrewAI Multi-Agent Framework | SerperDevTool | PostgreSQL | Gradio
