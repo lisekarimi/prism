@@ -56,14 +56,12 @@ calculate_risk_task:
     For each position loaded by the position manager, you MUST:
     1. First, use "Get Latest Market Rate" tool to fetch the current market rate for each position's tenor
     2. Then, use "Calculate Swap PnL" tool with the position AND the current_rate you just fetched
-    3. Calculate DV01 (interest rate sensitivity)
-    4. Calculate total portfolio DV01
 
     IMPORTANT: You must fetch the market rate for each position's tenor BEFORE calculating P&L.
     Match each position to the appropriate tenor rate (2Y, 5Y, 10Y, 30Y) based on years to maturity.
   expected_output: >
     Detailed P&L report for each position showing: position_id, entry_rate, current_rate,
-    rate_change_bps, P&L amount, and DV01. Also include total portfolio DV01.
+    rate_change_bps, and P&L amount.
   output_file: 'logs/risk_calculation_output.txt'
   agent: risk_calculator_agent
   context:

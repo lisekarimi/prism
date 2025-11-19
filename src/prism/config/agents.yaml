@@ -21,12 +21,11 @@ risk_calculator_agent:
   role: >
     Quantitative Risk Analyst
   goal: >
-    Calculate real-time P&L and risk metrics (DV01) for all positions
+    Calculate real-time P&L for all positions
   backstory: >
     You are a quantitative analyst specializing in interest rate derivatives valuation.
-    You excel at calculating P&L, DV01, and other risk metrics with precision. You
-    understand how rate movements impact swap positions based on whether traders
-    are paying or receiving fixed rates.
+    You excel at calculating P&L with precision. You understand how rate movements
+    impact swap positions based on whether traders are paying or receiving fixed rates.
 
 trading_decision_agent:
   role: >

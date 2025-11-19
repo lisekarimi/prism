@@ -20,6 +20,78 @@ def _calculate_years_to_maturity_internal(maturity_date):
     return max(years, 0)
 
 
+def _calculate_swap_pnl_internal(position, current_rate):
+    """Calculate swap P&L (for testing)."""
+    entry_rate = float(position["fixed_rate"])
+    notional = float(position["notional"])
+    years_to_maturity = _calculate_years_to_maturity_internal(position["maturity_date"])
+    dv01 = notional * 0.0001 * years_to_maturity
+    rate_change_bps = (current_rate - entry_rate) * 10000
+
+    # For RCV_FIXED: profit when rates decrease (entry_rate > current_rate)
+    # For PAY_FIXED: profit when rates increase (current_rate > entry_rate)
+    if position["pay_receive"] == "RCV_FIXED":
+        pnl = (
+            -rate_change_bps * dv01
+        )  # Negative of rate change (profit when rates drop)
+    else:  # PAY_FIXED
+        pnl = rate_change_bps * dv01  # Positive rate change (profit when rates rise)
+
+    return {
+        "position_id": position["position_id"],
+        "entry_rate": entry_rate,
+        "current_rate": current_rate,
+        "rate_change_bps": round(rate_change_bps, 2),
+        "pnl": round(pnl, 2),
+        "notional": notional,
+    }
+
+
+def _check_trading_signal_internal(pnl, threshold_profit=50000, threshold_loss=-25000):
+    """Check trading signal (for testing)."""
+    if pnl >= threshold_profit:
+        return {
+            "signal": "CLOSE",
+            "reason": f"Profit target hit: ${pnl:,.2f} >= ${threshold_profit:,.2f}",
+            "action": "Close position to lock in profit",
+        }
+    elif pnl <= threshold_loss:
+        return {
+            "signal": "CLOSE",
+            "reason": f"Stop loss hit: ${pnl:,.2f} <= ${threshold_loss:,.2f}",
+            "action": "Close position to limit loss",
+        }
+    else:
+        return {
+            "signal": "HOLD",
+            "reason": f"P&L ${pnl:,.2f} within acceptable range",
+            "action": "Continue monitoring",
+        }
+
+
+def _calculate_dynamic_thresholds_internal(position, volatility=0.02):
+    """Calculate dynamic thresholds (for testing)."""
+    notional = float(position["notional"])
+    if notional >= 20000000:
+        profit_pct = 0.003
+        loss_pct = 0.0015
+    elif notional >= 10000000:
+        profit_pct = 0.005
+        loss_pct = 0.0025
+    else:
+        profit_pct = 0.01
+        loss_pct = 0.005
+
+    profit_target = notional * profit_pct * (1 + volatility * 10)
+    stop_loss = -notional * loss_pct * (1 + volatility * 10)
+
+    return {
+        "position_id": position["position_id"],
+        "profit_target": round(profit_target, 2),
+        "stop_loss": round(stop_loss, 2),
+    }
+
+
 @tool("Calculate Swap PnL")
 def calculate_swap_pnl(
     position: dict = Field(  # noqa: B008
@@ -32,41 +104,16 @@ def calculate_swap_pnl(
 ):
     """Calculate the P&L for a swap position.
 
-    Formula: (Current_Rate - Entry_Rate) × DV01 × Notional × Direction
+    Formula: (Current_Rate - Entry_Rate) × Notional × Years × Direction
     """
     position_id = position.get("position_id", "unknown")
     logger.info(f"💰 Calculating P&L for position {position_id}")
 
-    entry_rate = float(position["fixed_rate"])
-    notional = float(position["notional"])
-
-    # Determine direction: PAY_FIXED = short rates (lose if rates rise), RCV_FIXED = long rates
-    direction = -1 if position["pay_receive"] == "PAY_FIXED" else 1
-    logger.debug(
-        f"  Entry rate: {entry_rate}%, Current rate: {current_rate}%, Direction: {position['pay_receive']} ({direction})"
-    )
-
-    # Use internal helper function instead of tool
-    years_to_maturity = _calculate_years_to_maturity_internal(position["maturity_date"])
-    dv01 = notional * 0.0001 * years_to_maturity  # 1bp move impact
-
-    # P&L = rate change in bps × DV01 × direction
-    rate_change_bps = (current_rate - entry_rate) * 10000  # convert to basis points
-    pnl = rate_change_bps * dv01 * direction
-
+    result = _calculate_swap_pnl_internal(position, current_rate)
     logger.info(
-        f"  P&L: ${pnl:,.2f} | Rate change: {round(rate_change_bps, 2)} bps | DV01: ${round(dv01, 2)}"
+        f"  P&L: ${result['pnl']:,.2f} | Rate change: {result['rate_change_bps']} bps"
     )
-
-    return {
-        "position_id": position["position_id"],
-        "entry_rate": entry_rate,
-        "current_rate": current_rate,
-        "rate_change_bps": round(rate_change_bps, 2),
-        "dv01": round(dv01, 2),
-        "pnl": round(pnl, 2),
-        "notional": notional,
-    }
+    return result
 
 
 @tool("Calculate Years to Maturity")
@@ -79,31 +126,6 @@ def calculate_years_to_maturity(
     years = _calculate_years_to_maturity_internal(maturity_date)
     logger.debug(f"  Years to maturity: {years:.2f} (maturity: {maturity_date})")
     return years
-
-
-@tool("Calculate Portfolio DV01")
-def calculate_portfolio_dv01(
-    positions: list = Field(  # noqa: B008
-        ...,
-        description="List of position dictionaries, each containing notional, maturity_date, and pay_receive",
-    ),
-):
-    """Calculate total DV01 (interest rate risk) across all positions."""
-    logger.info(f"📊 Calculating portfolio DV01 for {len(positions)} positions")
-    total_dv01 = 0
-
-    for position in positions:
-        notional = float(position["notional"])
-        years = _calculate_years_to_maturity_internal(position["maturity_date"])
-        dv01 = notional * 0.0001 * years
-
-        # Account for direction
-        direction = -1 if position["pay_receive"] == "PAY_FIXED" else 1
-        total_dv01 += dv01 * direction
-
-    result = round(total_dv01, 2)
-    logger.info(f"  Total portfolio DV01: ${result:,.2f}")
-    return result
 
 
 @tool("Check Trading Signal")
@@ -119,30 +141,14 @@ def check_trading_signal(
         f"🔍 Checking trading signal: P&L=${pnl:,.2f}, Profit threshold=${threshold_profit:,.2f}, Loss threshold=${threshold_loss:,.2f}"
     )
 
-    if pnl >= threshold_profit:
-        signal = {
-            "signal": "CLOSE",
-            "reason": f"Profit target hit: ${pnl:,.2f} >= ${threshold_profit:,.2f}",
-            "action": "Close position to lock in profit",
-        }
-        logger.warning(f"🚨 PROFIT TARGET HIT: {signal['reason']}")
-        return signal
-    elif pnl <= threshold_loss:
-        signal = {
-            "signal": "CLOSE",
-            "reason": f"Stop loss hit: ${pnl:,.2f} <= ${threshold_loss:,.2f}",
-            "action": "Close position to limit loss",
-        }
-        logger.warning(f"🚨 STOP LOSS HIT: {signal['reason']}")
-        return signal
+    signal = _check_trading_signal_internal(pnl, threshold_profit, threshold_loss)
+
+    if signal["signal"] == "CLOSE":
+        logger.warning(f"🚨 {signal['signal']}: {signal['reason']}")
     else:
-        signal = {
-            "signal": "HOLD",
-            "reason": f"P&L ${pnl:,.2f} within acceptable range",
-            "action": "Continue monitoring",
-        }
-        logger.debug(f"  Signal: HOLD - {signal['reason']}")
-        return signal
+        logger.debug(f"  Signal: {signal['signal']} - {signal['reason']}")
+
+    return signal
 
 
 @tool("Calculate Dynamic Thresholds")
@@ -151,25 +157,4 @@ def calculate_dynamic_thresholds(
     volatility: float = Field(default=0.02, description="Recent rate volatility"),  # noqa: B008
 ):
     """Calculate dynamic profit/loss thresholds based on position size and volatility."""
-    notional = float(position["notional"])
-
-    # Larger positions = tighter stops (as % of notional)
-    if notional >= 20000000:  # $20M+
-        profit_pct = 0.003  # 0.3%
-        loss_pct = 0.0015  # 0.15%
-    elif notional >= 10000000:  # $10M+
-        profit_pct = 0.005
-        loss_pct = 0.0025
-    else:
-        profit_pct = 0.01
-        loss_pct = 0.005
-
-    # Adjust for volatility
-    profit_target = notional * profit_pct * (1 + volatility * 10)
-    stop_loss = -notional * loss_pct * (1 + volatility * 10)
-
-    return {
-        "position_id": position["position_id"],
-        "profit_target": round(profit_target, 2),
-        "stop_loss": round(stop_loss, 2),
-    }
+    return _calculate_dynamic_thresholds_internal(position, volatility)
