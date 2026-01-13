@@ -6,8 +6,8 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy uv from official image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Install uv
+RUN pip install --no-cache-dir uv
 
 # Set up virtual environment
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv

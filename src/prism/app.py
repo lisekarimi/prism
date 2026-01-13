@@ -80,7 +80,28 @@ def get_current_usage(request: gr.Request = None):
 
 
 # Build Gradio interface
-with gr.Blocks(title="PRISM - Swap Trading AI", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(
+    title="PRISM - Swap Trading AI",
+    theme=gr.themes.Soft(),
+    head="""
+    <script>
+    (function() {
+        var script = document.createElement("script");
+        script.src = "https://pagebotai.lisekarimi.com/static/embed.js";
+        script.onload = function() {
+            initializePageBotAI({
+                chatbotName: 'PrismBot',
+                primaryColor: '#7c3aed',
+                instructions: 'You are a helpful AI assistant that answers questions based on the content of the websites you can access. Be friendly, concise, and accurate in your responses.',
+                targetUrls: ['https://prism.lisekarimi.com'],
+                wsUrl: 'https://pagebotai.lisekarimi.com/ws/chat'
+            });
+        };
+        document.head.appendChild(script);
+    })();
+    </script>
+    """,
+) as demo:
     gr.Markdown("# 🎯 PRISM - Position Risk Intelligence & Swap Monitor")
     gr.Markdown(
         "Real-time monitoring for **USD SOFR interest rate swaps** with AI agents (2Y, 5Y, 10Y, 30Y)"

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_network_requests"
+    ]
+  }
+}
