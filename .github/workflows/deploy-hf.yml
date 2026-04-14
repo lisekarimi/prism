@@ -57,9 +57,6 @@ jobs:
           cp uv.lock "$DEPLOY_DIR/"
           cp pyproject.toml "$DEPLOY_DIR/"
           cp -r src "$DEPLOY_DIR/"
-          mkdir -p "$DEPLOY_DIR/assets"
-          cp assets/screenshot.png "$DEPLOY_DIR/assets/"
-          cp assets/workflow.png "$DEPLOY_DIR/assets/"
 
       - name: Commit and push to HF Spaces
         run: |
