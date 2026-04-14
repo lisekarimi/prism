@@ -50,11 +50,9 @@ def get_latest_signals():
     # Add color emoji to signal_type
     if not df.empty and "signal_type" in df.columns:
         df["signal_type"] = df["signal_type"].apply(
-            lambda x: f"🔴 {x}"
-            if x == "CLOSE"
-            else f"🟢 {x}"
-            if x == "HOLD"
-            else f"🟡 {x}"  # HEDGE
+            lambda x: (
+                f"🔴 {x}" if x == "CLOSE" else f"🟢 {x}" if x == "HOLD" else f"🟡 {x}"
+            )  # HEDGE
         )
 
     return df

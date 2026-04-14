@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRISM — AI Swap Trading Monitor</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💹</text></svg>" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7c3aed;
+      --purple-light: #a78bfa;
+      --purple-dark: #4c1d95;
+      --cyan: #06b6d4;
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: rgba(124, 58, 237, 0.2);
+      --text: #f1f0ff;
+      --muted: #94a3b8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(124,58,237,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Grid overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    main {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(124,58,237,0.12);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.35rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--purple-light);
+      margin-bottom: 2rem;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+      animation: pulse 2s infinite;
+    }
+
+    /* ── Heading ── */
+    h1 {
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 0.4rem;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, var(--purple-light) 50%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle-line {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--muted);
+      font-weight: 400;
+      margin-bottom: 3rem;
+      animation: fadeDown 0.6s 0.2s ease both;
+    }
+
+    /* ── Agents row ── */
+    .agents {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 3.5rem;
+      animation: fadeDown 0.6s 0.3s ease both;
+    }
+
+    .agent-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .agent-chip:hover {
+      border-color: var(--purple-light);
+      color: var(--text);
+    }
+
+    .agent-chip span { font-size: 1rem; }
+
+    /* ── CTA Button ── */
+    .cta-wrap {
+      animation: fadeDown 0.6s 0.4s ease both;
+    }
+
+    .cta {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.1rem 2.8rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--purple) 0%, #5b21b6 100%);
+      border: 1px solid rgba(167,139,250,0.3);
+      box-shadow:
+        0 0 0 0 rgba(124,58,237,0.4),
+        0 20px 60px rgba(124,58,237,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+
+    .cta:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow:
+        0 0 0 4px rgba(124,58,237,0.2),
+        0 28px 70px rgba(124,58,237,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+
+    .cta:active { transform: translateY(-1px) scale(1.01); }
+
+    .cta-icon { font-size: 1.3rem; }
+
+    /* ── Stats row ── */
+    .stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 4rem;
+      animation: fadeDown 0.6s 0.55s ease both;
+    }
+
+    .stat { text-align: center; }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--purple-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 0.2rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.78rem;
+      color: rgba(148,163,184,0.5);
+    }
+
+    footer a { color: var(--purple-light); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .stats { gap: 1.5rem; }
+      .stat-value { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Live on Hugging Face Spaces
+    </div>
+
+    <h1 class="gradient-text">PRISM</h1>
+    <p class="subtitle-line">
+      Position Risk Intelligence &amp; Swap Monitor<br>
+      <strong style="color:#e2e8f0;">5 AI agents</strong> monitoring your USD SOFR swap positions in real-time
+    </p>
+
+    <div class="agents">
+      <div class="agent-chip"><span>📡</span> Market Data</div>
+      <div class="agent-chip"><span>📊</span> Portfolio</div>
+      <div class="agent-chip"><span>⚖️</span> Risk Manager</div>
+      <div class="agent-chip"><span>💰</span> Risk Calculator</div>
+      <div class="agent-chip"><span>🎯</span> Trading Decision</div>
+    </div>
+
+    <div class="cta-wrap">
+      <a class="cta" href="https://huggingface.co/spaces/lisekarimi/prism-app" target="_blank" rel="noopener noreferrer">
+        <span class="cta-icon">🚀</span>
+        Try the Agentic System
+      </a>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Tenors tracked</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">5</div>
+        <div class="stat-label">AI Agents</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">Real-time</div>
+        <div class="stat-label">Rate updates</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    Built with <a href="https://www.crewai.com/" target="_blank">CrewAI</a> ·
+    <a href="https://github.com/lisekarimi/prism" target="_blank">GitHub</a> ·
+    <a href="https://lisekarimi.com" target="_blank">Portfolio</a>
+  </footer>
+
+</body>
+</html>
