@@ -1,0 +1,69 @@
+name: Deploy to Hugging Face
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to HF Spaces
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_DIR: hf_deploy
+      HF_SPACE: prism-app
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Extract project info
+        run: |
+          PROJECT_NAME=$(grep '^name = ' pyproject.toml | sed 's/name = "\(.*\)"/\1/')
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "PROJECT_NAME=$PROJECT_NAME" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Deploying $PROJECT_NAME v$VERSION to HF Space: $HF_SPACE"
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ secrets.GIT_USERNAME }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
+
+      - name: Clone or init HF Space repo
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+        run: |
+          REPO_URL="https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE}"
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+
+          if git ls-remote "$REPO_URL" >/dev/null 2>&1; then
+            echo "Repository exists, cloning..."
+            git clone "$REPO_URL" "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+            find . -mindepth 1 -not -path "./.git*" -exec rm -rf {} +
+            cd ..
+          else
+            echo "No repository found, initializing new one..."
+            cd "$DEPLOY_DIR"
+            git init -b main
+            git remote add origin "$REPO_URL"
+            cd ..
+          fi
+
+      - name: Copy project files
+        run: |
+          cp Dockerfile "$DEPLOY_DIR/"
+          cp README.md "$DEPLOY_DIR/"
+          cp uv.lock "$DEPLOY_DIR/"
+          cp pyproject.toml "$DEPLOY_DIR/"
+          cp -r src "$DEPLOY_DIR/"
+          mkdir -p "$DEPLOY_DIR/assets"
+          cp assets/screenshot.png "$DEPLOY_DIR/assets/"
+          cp assets/workflow.png "$DEPLOY_DIR/assets/"
+
+      - name: Commit and push to HF Spaces
+        run: |
+          cd "$DEPLOY_DIR"
+          git add .
+          git commit -m "Deploy ${{ env.PROJECT_NAME }} v${{ env.VERSION }}" || echo "No changes to commit"
+          git push origin main

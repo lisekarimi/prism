@@ -9,13 +9,16 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 RUN pip install --no-cache-dir uv
 
-# Set up virtual environment
-ENV UV_PROJECT_ENVIRONMENT=/opt/venv
-ENV PATH="/opt/venv/bin:${PATH}"
-ENV PYTHONPATH=/app/src
+# Add HF-required non-root user (uid 1000)
+RUN useradd -m -u 1000 user
+
+# Set up virtual environment under user home
+ENV UV_PROJECT_ENVIRONMENT=/home/user/venv
+ENV PATH="/home/user/venv/bin:${PATH}"
+ENV PYTHONPATH=/home/user/app/src
 
 # Set working directory
-WORKDIR /app
+WORKDIR /home/user/app
 
 # Copy dependency files first (for layer caching)
 COPY pyproject.toml uv.lock ./
@@ -25,6 +28,12 @@ RUN uv sync --frozen
 
 # Copy rest of application
 COPY src ./src
+
+# Fix ownership before switching user
+RUN chown -R user:user /home/user/app /home/user/venv
+
+# Switch to non-root user
+USER user
 
 # Expose Gradio port
 EXPOSE 7860

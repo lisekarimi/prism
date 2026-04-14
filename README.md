@@ -1,3 +1,14 @@
+---
+title: PRISM
+emoji: 💹
+colorFrom: purple
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: PRISM - Position Risk Intelligence & Swap Monitor
+---
+
 # 💹 PRISM - Position Risk Intelligence & Swap Monitor
 
 AI-powered swap trading monitoring system using CrewAI multi-agent framework.
@@ -36,36 +47,48 @@ PRISM monitors USD SOFR swap trading positions in real-time and automatically ge
 - **Gradio** - Web dashboard
 - **Python 3.11** - Runtime
 
+## 🚀 Deploy on Hugging Face Spaces
 
-## 📋 Pre-requisites
+This app is built to run as a Docker Space on Hugging Face.
 
-**Development Tools:**
-- Python 3.10+
-- [uv package manager](https://docs.astral.sh/uv/getting-started/installation/)
+### 1. Fork & create a Space
+
+- Fork this repo on GitHub
+- Create a new Space on [huggingface.co/spaces](https://huggingface.co/spaces) with **Docker** as the SDK
+- Link it to your forked GitHub repo
+
+### 2. Set Space secrets
+
+In your Space settings → **Variables and Secrets**, add:
+
+| Secret | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (e.g. from [Neon](https://neon.tech)) |
+| `OPENAI_API_KEY` | OpenAI API key for the LLM agents |
+| `SERPER_API_KEY` | Serper API key for Google Search ([serper.dev](https://serper.dev)) |
+
+### 3. Deploy
+
+Push to your linked branch — HF Spaces will build and deploy automatically.
+
+## 📋 Local Development
+
+**Prerequisites:**
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- WSL (Windows Subsystem for Linux)
-- Make: `winget install GnuWin32.Make` (Windows) | `brew install make` (macOS) | `sudo apt install make` (Linux)
-- PostgreSQL database (you can use https://neon.com/ which is free)
-- OpenAI API key for LLM
-- Serper API key from https://serper.dev/ for Google Search API
+- PostgreSQL database (free tier at [neon.tech](https://neon.tech))
+- OpenAI API key
+- Serper API key
 
-## 📥 Installation Instructions
+**Setup:**
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/lisekarimi/prism.git
-   cd prism
-   ```
-
-2. **Set Up Environment**:
-   - Copy the `.env.example` to `.env` and fill in the required environment variables.
-
-
-## 🚀 Quick Start
-
-   ```bash
-   make dev
-   ```
+```bash
+git clone https://github.com/lisekarimi/prism.git
+cd prism
+cp .env.example .env  # fill in your credentials
+make dev
+```
 
 ## 🗄️ Database Schema
 

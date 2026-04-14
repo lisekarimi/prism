@@ -20,16 +20,16 @@ dev: ## Build and run development container with hot reload
 	docker run -d \
 		--name $(CONTAINER_NAME)-dev \
 		-p $(APP_PORT):$(APP_PORT) \
-		-v $(PWD)/src:/app/src \
-		-v $(PWD)/logs:/app/logs \
-		-v $(PWD)/.env:/app/.env:ro \
+		-v $(PWD)/src:/home/user/app/src \
+		-v $(PWD)/logs:/home/user/app/logs \
+		-v $(PWD)/.env:/home/user/app/.env:ro \
 		$(DOCKER_IMAGE):dev
 	@echo "🎯 PRISM running at http://localhost:$(APP_PORT)"
 	@echo "📊 Dashboard available"
 	@echo "🤖 AI agents ready"
 
 ls: ## List files inside the container
-	docker run --rm $(DOCKER_IMAGE):dev ls -la /app
+	docker run --rm $(DOCKER_IMAGE):dev ls -la /home/user/app
 
 stop: ## Stop dev container
 	docker stop $(CONTAINER_NAME)-dev || true
